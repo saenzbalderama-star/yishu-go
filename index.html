@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>易数 · 跳转中</title>
+<style>
+  :root { --bg: #05060B; --fg: #E8ECF8; --dim: #9AA3BD; --accent: #8B6CFF; }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    min-height: 100dvh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px;
+    background:
+      radial-gradient(900px 500px at 50% -10%, rgba(139,108,255,.22), transparent 62%),
+      var(--bg);
+    color: var(--fg); font: 15px/1.7 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    text-align: center; padding: 24px;
+  }
+  h1 { font-size: 26px; letter-spacing: 8px; color: var(--accent); font-weight: 800; }
+  p { color: var(--dim); font-size: 14px; }
+  .spin {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid rgba(139,108,255,.25); border-top-color: var(--accent);
+    animation: r .8s linear infinite;
+  }
+  @keyframes r { to { transform: rotate(360deg); } }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(139,108,255,.4); }
+  .err { max-width: 420px; line-height: 1.9; }
+  code { background: rgba(139,108,255,.14); padding: 2px 7px; border-radius: 5px; font-size: 13px; }
+</style>
+</head>
+<body>
+  <h1>易数</h1>
+  <div id="box"><div class="spin"></div></div>
+  <p id="msg">正在前往…</p>
+
+<script>
+/**
+ * 固定入口页：地址永久不变，内容从这里跳到站长电脑上最新的隧道地址。
+ *
+ * 当前地址存在同目录的 address.txt 里（由 update-current-url.sh 自动写入并推送），
+ * 所以站长那边的随机地址换了，朋友访问的这个链接永远不用改。
+ *
+ * 注意禁用缓存，否则会一直跳到旧地址。
+ */
+const box = document.getElementById('box')
+const msg = document.getElementById('msg')
+
+function fail(detail) {
+  box.innerHTML = '😕'
+  msg.className = 'err'
+  msg.innerHTML = detail
+}
+
+fetch('address.txt?t=' + Date.now(), { cache: 'no-store' })
+  .then(r => r.ok ? r.text() : Promise.reject(new Error('HTTP ' + r.status)))
+  .then(text => {
+    const url = text.trim()
+    if (!url || !/^https?:\/\//.test(url)) throw new Error('地址文件内容异常')
+    msg.textContent = '正在打开 ' + url.replace(/^https?:\/\//, '')
+    setTimeout(() => { location.replace(url) }, 600)
+  })
+  .catch(err => {
+    fail('还没拿到最新地址，站长可能没开电脑。<br><br>' +
+         '如果你是站长：在项目目录执行 <code>./share-redirect/update-current-url.sh</code>，' +
+         '它会抓取当前隧道地址并自动推送。<br><br>' +
+         '<small style="opacity:.6">' + err.message + '</small>')
+  })
+</script>
+</body>
+</html>
